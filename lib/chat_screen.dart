@@ -22,10 +22,10 @@ class _State extends State<ChatScreen> {
   double? _temperature = 0.7;
   double? _maxLength;
   double? _lengthPenalty = 1.0;
-
   final StringBuffer _tokenBuffer = StringBuffer();
   final TextEditingController _promptController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  String _userPrompt = '';
 
   @override
   void initState() {
@@ -51,16 +51,13 @@ class _State extends State<ChatScreen> {
     }
   }
 
-  void _inference(String userPrompt) async {
+  void _inference() async {
     setState(() {
       _tokenBuffer.clear();
-      _tokenBuffer.write(userPrompt);
-      _tokenBuffer.write("\n");
-      _tokenBuffer.write("\n");
       _inferencing = true;
     });
     String finalPrompt = "<system>$_systemPrompt<|end|>"
-        "<|user|>$userPrompt<|end|>"
+        "<|user|>$_userPrompt<|end|>"
         "<|assistant|>";
 
     Map<String, double> params = {};
@@ -191,6 +188,8 @@ class _State extends State<ChatScreen> {
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(_userPrompt),
+          const SizedBox(height: 16),
           Expanded(
             child: StreamBuilder<String>(
               stream: GenAI.tokenStream,
@@ -198,7 +197,11 @@ class _State extends State<ChatScreen> {
                 if (snapshot.hasError) {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 } else if (!snapshot.hasData) {
-                  return const Center(child: Text('Enter your prompt...'));
+                  return Center(
+                    child: Text(_inferencing
+                        ? 'Inferencing...'
+                        : 'Enter your prompt...'),
+                  );
                 } else {
                   _tokenBuffer.write(snapshot.data!);
                   WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -216,39 +219,38 @@ class _State extends State<ChatScreen> {
               },
             ),
           ),
-          SizedBox(
-            height: 48,
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _promptController,
-                    decoration: const InputDecoration(
-                      border: UnderlineInputBorder(),
-                      labelText: 'Prompt',
-                    ),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _promptController,
+                  maxLines: null,
+                  decoration: const InputDecoration(
+                    border: UnderlineInputBorder(),
+                    labelText: 'Prompt',
                   ),
                 ),
-                SizedBox(
-                  width: 36,
-                  child: Center(
-                    child: _inferencing
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(),
-                          )
-                        : IconButton(
-                            onPressed: () {
-                              _inference(_promptController.text);
-                              _promptController.clear();
-                            },
-                            icon: const Icon(Icons.send),
-                          ),
-                  ),
+              ),
+              SizedBox(
+                width: 36,
+                child: Center(
+                  child: _inferencing
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(),
+                        )
+                      : IconButton(
+                          onPressed: () {
+                            _userPrompt = _promptController.text;
+                            _inference();
+                            _promptController.clear();
+                          },
+                          icon: const Icon(Icons.send),
+                        ),
                 ),
-              ],
-            ),
+              ),
+            ],
           )
         ],
       ),
