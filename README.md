@@ -1,16 +1,17 @@
-# flutter_gen_ai_demo
+# Flutter Local Gen AI Demo
 
-A new Flutter project.
+This is a simple example code that demonstrate how use Small Language Models to run on mobile device using a Flutter app.
 
-## Getting Started
+**Links:**
+- [Medium Article](https://medium.com/@harshanck/ai-at-your-fingertips-local-generative-ai-with-flutter-a10bce7d280a)
 
-This project is a starting point for a Flutter application.
+### Running the project
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1. Clone the repository
+```
+git clone <repo_url>
+```
+2. Run (Use a physical device with enough ram. Models used in this project will be downloaded from internet. These file are gigabytes in size.)
+```
+flutter run
+```
