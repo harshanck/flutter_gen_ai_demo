@@ -5,6 +5,7 @@ import ai.onnxruntime.genai.Generator
 import ai.onnxruntime.genai.GeneratorParams
 import ai.onnxruntime.genai.Model
 import ai.onnxruntime.genai.Tokenizer
+import ai.onnxruntime.genai.Tensor
 import ai.onnxruntime.genai.TokenizerStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -16,7 +17,7 @@ class GenAIWrapper {
     fun load(modelPath: String): Boolean {
         return try {
             model = Model(modelPath)
-            tokenizer = model.createTokenizer()
+            tokenizer = Tokenizer(model);
             true
         } catch (e: GenAIException) {
             false
@@ -34,24 +35,26 @@ class GenAIWrapper {
 
         return try {
             val stream: TokenizerStream = tokenizer.createStream()
-            val generatorParams = model.createGeneratorParams().apply {
+            val generatorParams = GeneratorParams(model)
+                .apply {
                 setSearchOption("max_length", 1000.0)
                 params.forEach { (key, value) ->
                     setSearchOption(key, value)
                 }
-                setInput(tokenizer.encode(prompt))
             }
             val generator = Generator(model, generatorParams)
 
             try {
                 while (!generator.isDone) {
-                    generator.computeLogits()
-                    generator.generateNextToken()
-                    val token = generator.getLastTokenInSequence(0)
-                    val str = stream.decode(token)
-                    withContext(Dispatchers.Main) {
-                        onTokenGenerated(str)
+
+                    generator.appendTokenSequences(tokenizer.encode(prompt))
+                    for (tokenId in generator) {
+                        var token = stream.decode(tokenId)
+                        withContext(Dispatchers.Main) {
+                            onTokenGenerated(token)
+                        }
                     }
+
                 }
                 true
             } finally {
